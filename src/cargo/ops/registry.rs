@@ -898,6 +898,9 @@ pub fn registry_login(
             if tok.is_empty() {
                 bail!("please provide a non-empty token");
             }
+            if !tok.is_ascii() && source_ids.original.is_crates_io() {
+                bail!("malformed token: Token is invalid ascii");
+            }
         }
     }
     if &reg_cfg == &new_token {

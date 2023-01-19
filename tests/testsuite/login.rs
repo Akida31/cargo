@@ -129,6 +129,39 @@ fn empty_login_token() {
 }
 
 #[cargo_test]
+fn non_ascii_login_token() {
+    let registry = RegistryBuilder::new()
+        .no_configure_registry()
+        .no_configure_token()
+        .build();
+    setup_new_credentials();
+
+    cargo_process("login")
+        .replace_crates_io(registry.index_url())
+        .with_stdout("please paste the token found on [..]/me below")
+        .with_stdin("😄\t\n")
+        .with_stderr(
+            "\
+[UPDATING] crates.io index
+[ERROR] malformed token: Token is invalid ascii
+",
+        )
+        .with_status(101)
+        .run();
+
+    cargo_process("login")
+        .replace_crates_io(registry.index_url())
+        .arg("")
+        .with_stderr(
+            "\
+[ERROR] please provide a non-empty token
+",
+        )
+        .with_status(101)
+        .run();
+}
+
+#[cargo_test]
 fn bad_asymmetric_token_args() {
     // These cases are kept brief as the implementation is covered by clap, so this is only smoke testing that we have clap configured correctly.
     cargo_process("login --key-subject=foo tok")
